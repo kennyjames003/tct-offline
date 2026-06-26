@@ -1,7 +1,7 @@
 // Trans Catalina Trail offline PWA — cache-first service worker.
-// Everything (trail data, code) is inlined in index.html, so caching the shell = full offline.
-const CACHE = 'tct-v2';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
+// Code + trail data are inlined in index.html; topo contours load from ./_topo.json (precached below).
+const CACHE = 'tct-v3';
+const ASSETS = ['./', './index.html', './manifest.webmanifest', './_topo.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
