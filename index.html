@@ -105,6 +105,13 @@ details[open]>summary::after{content:"▴"}
 .itin.tonight+.itin{border-top:none}
 .itin.tonight .cn{color:var(--accent)}
 .tag-now{display:inline-block;font-size:9.5px;font-weight:800;background:rgba(52,211,153,.22);color:var(--accent);padding:1px 6px;border-radius:20px;margin-left:6px;vertical-align:middle}
+.sched{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:13px;align-items:baseline}
+.sched:first-child{border-top:none}
+.sched .tm{font-weight:800;color:var(--accent);width:78px;flex-shrink:0;font-variant-numeric:tabular-nums}
+.sched .pl{flex:1;min-width:0;line-height:1.35}
+.sched .mi2{color:var(--dim);font-size:11px;flex-shrink:0;white-space:nowrap}
+.dl{display:flex;flex-wrap:wrap;gap:5px 14px;font-size:12.5px;margin:3px 0}
+.dl span b{color:var(--accent)}
 .pop{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);
   border-radius:18px 18px 0 0;padding:16px 18px calc(20px + env(safe-area-inset-bottom));
   transform:translateY(110%);transition:transform .25s;z-index:50;max-width:760px;margin:0 auto;box-shadow:0 -10px 40px rgba(0,0,0,.4)}
@@ -151,6 +158,38 @@ details[open]>summary::after{content:"▴"}
     <h2>🏕 Your camp nights</h2>
     <div id="itinList"></div>
   </div>
+
+  <details id="sundayPlan">
+    <summary>☀️ Sunday game plan — the big day</summary>
+    <div class="acc-body">
+      <div class="tip" style="border:1px solid rgba(251,191,36,.45)">
+        <div class="th">⚠️ Hermit Gulch → Two Harbors</div>
+        <div><b>23.1 miles · +5,631 ft of climbing</b> — basically 2–3 normal TCT days in one, with no water or camp between the ends. A full dawn-to-dusk push; the single biggest lever is starting at first light.</div>
+      </div>
+      <div class="tip">
+        <div class="th">🌅 Daylight (Sun Jun 28, PDT)</div>
+        <div class="dl"><span>First light <b>5:18a</b></span><span>Sunrise <b>5:46a</b></span><span>Sunset <b>8:07p</b></span><span>Last light <b>8:36p</b></span></div>
+        <div style="margin-top:3px">14h 21m of daylight. <b>Be hiking by 5:30 AM</b> (headlamp for the first ~20 min) to bank the cool hours for the big climb and leave a buffer before dark.</div>
+      </div>
+      <div class="tip">
+        <div class="th">⏱️ Target schedule</div>
+        <div class="sched"><div class="tm">5:30a</div><div class="pl"><b>Leave Hermit Gulch</b> · climb out of Avalon Canyon</div><div class="mi2">mi 1.6</div></div>
+        <div class="sched"><div class="tm">~8:00a</div><div class="pl"><b>Haypress</b> · quick water top-off</div><div class="mi2">mi 5.5</div></div>
+        <div class="sched"><div class="tm">~10:45a</div><div class="pl"><b>Black Jack</b> · backup water only</div><div class="mi2">mi 11.2</div></div>
+        <div class="sched"><div class="tm">~12:00p</div><div class="pl"><b>Airport in the Sky</b> · LUNCH, A/C, reliable water, restrooms — long break, refill everything</div><div class="mi2">mi 13.0</div></div>
+        <div class="sched"><div class="tm">~3:30p</div><div class="pl"><b>Little Harbor</b> · water, rest, feet in the ocean</div><div class="mi2">mi 19.6</div></div>
+        <div class="sched"><div class="tm">~6:30–7:30p</div><div class="pl"><b>Two Harbors</b> · the final climb out of Little Harbor is the crux</div><div class="mi2">mi 24.7</div></div>
+      </div>
+      <div class="tip">
+        <div class="th">💧 Heat & water</div>
+        <div>Carry ~3 L; top off fully at the Airport (most reliable) and Little Harbor. Plan to drink 4–6 L with electrolytes. The hottest window (12–4p) lines up with your Airport lunch and the shadier descent — save water and legs for the Little Harbor → Two Harbors climb (+1,420 ft at day's end).</div>
+      </div>
+      <div class="tip">
+        <div class="th">🦬 Bison & 🆘 bail-out</div>
+        <div>Give bison 100+ ft, especially around the Black Jack/Airport grasslands and Little Harbor. If the day's going sideways, the <b>Airport (mi 13, ~noon)</b> is your decision point — the Catalina Safari Bus runs Avalon ↔ Airport ↔ Little Harbor ↔ Two Harbors.</div>
+      </div>
+    </div>
+  </details>
 
   <div class="card">
     <h2>Map (trail line + your position)</h2>
@@ -636,6 +675,8 @@ $('troubleshoot').addEventListener('toggle',function(){if(this.open)renderTroubl
 (function(){try{var l=JSON.parse(localStorage.getItem('tct_last'));if(l){me=null;}}catch(e){}})();
 fitTrail();view.scale*=1; follow=true;$('followBtn').classList.add('on');
 renderAll();
+// on the big day itself, pop the Sunday plan open automatically
+if(todayISO()==='2026-06-28'){var _sp=$('sundayPlan');if(_sp)_sp.open=true;}
 // load topographic contour data (cached by the service worker for offline use)
 fetch('./_topo.json').then(function(r){return r.json();}).then(function(j){TCT.topo=j;drawMap();}).catch(function(){});
 window.addEventListener('resize',function(){drawMap();drawElev();});
