@@ -1,0 +1,60 @@
+{
+  "name": "Mount Whitney Trail",
+  "short": "WHITNEY",
+  "contour": { "interval": 200, "index": 1000 },
+  "theme": { "accent": "#34d399" },
+  "trackFile": "whitney.track.json",
+  "land": null,
+  "disclaimer": "Verify permits, water, and conditions with Inyo National Forest before you go. Afternoon thunderstorms and altitude are the real dangers. This is a companion, not a substitute for a map and judgment.",
+  "features": [
+    { "name": "Whitney Portal", "cat": "town", "lat": 36.58707, "lon": -118.24014, "water": "yes",
+      "notes": "Trailhead (~8,360′). Store, grill, water, restrooms, last food. A Whitney Zone permit is required and overnight trips need a bear canister. Fill up and start in the dark on summit day." },
+    { "name": "Lone Pine Lake", "cat": "water", "lat": 36.57887, "lon": -118.25176, "water": "yes",
+      "notes": "First lake (~9,960′), a short spur off the main trail. Just below the Whitney Zone boundary — good water and a rest spot." },
+    { "name": "Outpost Camp", "cat": "camp", "lat": 36.57114, "lon": -118.26155, "water": "yes",
+      "notes": "Lower camp (~10,360′) in a meadow by Lone Pine Creek. More sheltered/treed than Trail Camp; water available. A milder acclimatization option." },
+    { "name": "Mirror Lake", "cat": "water", "lat": 36.56749, "lon": -118.26772, "water": "yes",
+      "notes": "Lake at ~10,640′. Water; no camping. Steep switchbacks follow above here." },
+    { "name": "Trailside Meadow", "cat": "water", "lat": 36.56557, "lon": -118.27178, "water": "seasonal",
+      "notes": "Small green meadow (~11,400′) with a seasonal creek. Often the last easy water before Trail Camp early/late season." },
+    { "name": "Trail Camp", "cat": "camp", "lat": 36.56297, "lon": -118.27918, "water": "seasonal",
+      "notes": "Highest camp (~12,000′) and the launch point for summit day. LAST reliable water before the 99 switchbacks — tank up and treat it. Exposed and cold; bear canister required, and marmots raid packs.",
+      "stay": { "dates": "Fri Jul 17 → Sat Jul 18, 2026", "nights": 1, "unit": "Whitney Zone overnight permit · treat & tank up on water here" } },
+    { "name": "Trail Crest", "cat": "junction", "lat": 36.56652, "lon": -118.2925, "water": "no",
+      "notes": "Top of the 99 switchbacks (~13,600′) and the JMT/PCT junction. Many stash overnight gear here for the out-and-back to the summit. No water beyond this point." },
+    { "name": "Mt. Whitney Summit", "cat": "junction", "lat": 36.57847, "lon": -118.29247, "water": "no", "end": true,
+      "notes": "14,505′ — highest point in the lower 48. Stone summit hut, sign the log. This is your turnaround; descend the same way. Be heading down before afternoon storms build." }
+  ],
+  "global": [
+    { "name": "Altitude (AMS)", "cat": "hazard", "notes": "You'll sleep at ~12,000′ and summit at 14,505′. Headache/nausea/dizziness = AMS. Hydrate, go slow, and DESCEND if it worsens — altitude is the most common reason people turn around." },
+    { "name": "Afternoon thunderstorms", "cat": "hazard", "notes": "Sierra storms build by midday in summer. Summit early and aim to be below Trail Crest by noon. Lightning on the exposed ridge is deadly — turn around if storms are building." },
+    { "name": "Permits & bear canister", "cat": "hazard", "notes": "A Whitney Zone permit is required (overnight via lottery/reservation). Overnight trips must carry a bear canister. Pack out everything, including WAG bags — human waste must be carried out in the Whitney Zone." },
+    { "name": "Water strategy", "cat": "hazard", "notes": "Reliable water: Lone Pine Lake, Outpost Camp, Mirror Lake, and Trail Camp. Treat everything. NO water above Trail Camp — carry enough for the summit push and back (3+ L on summit day)." },
+    { "name": "The 99 switchbacks & cables", "cat": "hazard", "notes": "The relentless switchbacks climb from Trail Camp (~12,000′) to Trail Crest (~13,600′). A cabled section can hold ice/snow early season — check conditions; an ice axe + microspikes may still be needed in mid-July after a big snow year." },
+    { "name": "Marmots & cold", "cat": "hazard", "notes": "Marmots at Trail Camp chew through packs for salt — never leave gear unattended. Summit temps can be below freezing with wind even in July; carry warm layers, gloves, and a hat." }
+  ],
+  "itinerary": [
+    { "n": 1, "date": "2026-07-17", "dow": "Fri Jul 17", "camp": "Trail Camp", "cat": "camp", "sub": "Hike Whitney Portal → Trail Camp (~6.0 mi, +3,700′) · acclimatize, tank up on water" },
+    { "date": "2026-07-18", "dow": "Sat Jul 18", "camp": "Summit → out", "cat": "end", "sub": "Trail Camp → summit (~4.7 mi, +2,400′), then descend all the way to the Portal", "depart": true }
+  ],
+  "plan": {
+    "summary": "🏔️ Summit-day game plan (Sat Jul 18)",
+    "autoOpen": ["2026-07-17", "2026-07-18"],
+    "blocks": [
+      { "th": "⚠️ Summit day — Trail Camp → summit → out", "accent": "rgba(251,191,36,.45)",
+        "html": "Alpine start in the dark, summit by mid-morning, then pack up and descend all the way to the Portal. The single biggest day of the trip. <b>Be below Trail Crest before afternoon storms build.</b>" },
+      { "th": "🌅 Daylight (Sat Jul 18, PDT)",
+        "daylight": { "First light": "5:19a", "Sunrise": "5:48a", "Sunset": "8:10p", "Last light": "8:40p" },
+        "html": "Start at ~3 AM by headlamp so you summit with hours of weather margin." },
+      { "th": "⏱️ Target schedule", "sched": [
+        { "tm": "~3:00a", "pl": "<b>Leave Trail Camp</b> · headlamp up the 99 switchbacks", "mi": "" },
+        { "tm": "~5:00a", "pl": "<b>Trail Crest</b> · stash overnight gear, carry a summit pack + water", "mi": "" },
+        { "tm": "~7:30–8:30a", "pl": "<b>Summit (14,505′)</b> · photos, sign the log, then turn around", "mi": "" },
+        { "tm": "~11:00a", "pl": "<b>Back at Trail Camp</b> · break camp", "mi": "" },
+        { "tm": "afternoon", "pl": "<b>Descend to Whitney Portal</b> · pace your knees on the long drop", "mi": "" }
+      ] },
+      { "th": "💧 Altitude, water & storms",
+        "html": "Treat all water; last reliable source is Trail Camp — carry 3+ L for the summit push. Watch for AMS and descend if it worsens. Summit early and be off the exposed ridge before noon in monsoon season. Bear canister required; marmots raid unattended packs." }
+    ]
+  }
+}
