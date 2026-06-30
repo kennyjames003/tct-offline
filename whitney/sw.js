@@ -1,7 +1,7 @@
 // Offline trail-map PWA — cache-first service worker.
 // Code + trail data are inlined in index.html; topo contours load from ./_topo.json (precached below).
 // Bump the version below whenever you redeploy so clients pick up the new files.
-const CACHE = 'whitney-v3';
+const CACHE = 'whitney-v4';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './_topo.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

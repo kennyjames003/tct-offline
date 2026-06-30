@@ -16,11 +16,11 @@
   --bg:#0b1410; --panel:#13201a; --panel2:#1b2c24; --line:#2c4034;
   --txt:#eaf3ee; --dim:#9fb6aa; --accent:#34d399; --warn:#fbbf24; --bad:#f87171;
   --water:#38bdf8; --camp:#f59e0b; --town:#a78bfa; --air:#f472b6;
-  --sea:#0d2330; --land:#243524; --coast:#3d5a48; --contour:#37503f; --contourI:#5d7c64;
+  --sea:#0d2330; --land:#243524; --coast:#3d5a48; --junction:#cbd5e1; --contour:#37503f; --contourI:#5d7c64;
 }
 html.sun{
   --bg:#fefefe; --panel:#ffffff; --panel2:#f1f5f2; --line:#c4d3ca;
-  --txt:#0a1a12; --dim:#3f5a4c; --accent:#047857; --sea:#cfe6f2; --land:#e9ecdc; --coast:#9bb1a3; --warn:#b45309; --bad:#b91c1c; --contour:#bcc7a8; --contourI:#94a47e;
+  --txt:#0a1a12; --dim:#3f5a4c; --accent:#047857; --sea:#cfe6f2; --land:#e9ecdc; --coast:#9bb1a3; --junction:#475569; --warn:#b45309; --bad:#b91c1c; --contour:#bcc7a8; --contourI:#94a47e;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
@@ -308,7 +308,7 @@ var dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
 // ---- icon helpers ----
 function catIcon(c){return c==='water'?'💧':c==='camp'?'⛺':c==='town'?'🏘️':c==='airport'?'✈️':c==='bailout'?'🆘':c==='hazard'?'⚠️':c==='junction'?'⛰️':'•';}
 function catBadge(c){return c==='water'?'b-water':c==='camp'?'b-camp':c==='town'?'b-town':c==='airport'?'b-air':c==='bailout'?'b-bail':'b-camp';}
-function catColor(c){return c==='water'?getCss('--water'):c==='camp'?getCss('--camp'):c==='town'?getCss('--town'):c==='airport'?getCss('--air'):c==='bailout'?getCss('--warn'):getCss('--accent');}
+function catColor(c){return c==='water'?getCss('--water'):c==='camp'?getCss('--camp'):c==='town'?getCss('--town'):c==='airport'?getCss('--air'):c==='junction'?getCss('--junction'):c==='bailout'?getCss('--warn'):getCss('--accent');}
 function getCss(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 
 // ====== RENDER: map ======
@@ -368,12 +368,21 @@ function drawMap(){
   mctx.stroke();
   // start / end ticks
   // features
+  var startMi=1e9;for(var k=0;k<F.length;k++){if(F[k].cat!=='bailout'&&F[k].mi<startMi)startMi=F[k].mi;}
   for(var k=0;k<F.length;k++){var f=F[k]; if(f.cat==='bailout')continue;
     var w=world(f.lat,f.lon);var s=w2s(w[0],w[1],d);
     if(s[0]<-20||s[0]>d.w+20||s[1]<-20||s[1]>d.h+20)continue;
-    if(f.beyond)mctx.globalAlpha=.5;
-    mctx.beginPath();mctx.fillStyle=f.beyond?getCss('--dim'):catColor(f.cat);mctx.arc(s[0],s[1],5,0,7);mctx.fill();
-    mctx.lineWidth=1.5;mctx.strokeStyle=getCss('--bg');mctx.stroke();mctx.globalAlpha=1;
+    var big=f.end||f.mi<=startMi+0.05;          // trailhead + objective stand out
+    var r=big?6.5:5;
+    if(f.beyond)mctx.globalAlpha=.55;
+    mctx.beginPath();
+    if(f.cat==='junction'){ // peaks/passes as an upward triangle, not a dot
+      mctx.moveTo(s[0],s[1]-r-1);mctx.lineTo(s[0]-r-1,s[1]+r);mctx.lineTo(s[0]+r+1,s[1]+r);mctx.closePath();
+    }else{ mctx.arc(s[0],s[1],r,0,7); }
+    mctx.fillStyle=f.beyond?getCss('--dim'):catColor(f.cat);mctx.fill();
+    mctx.lineWidth=1.5;mctx.strokeStyle=getCss('--bg');mctx.stroke();
+    if(big){mctx.beginPath();mctx.arc(s[0],s[1],r+3,0,7);mctx.lineWidth=2;mctx.strokeStyle='#fff';mctx.stroke();}
+    mctx.globalAlpha=1;
     f._sx=s[0];f._sy=s[1];
   }
   // me
