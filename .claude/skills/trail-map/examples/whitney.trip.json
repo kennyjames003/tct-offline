@@ -1,7 +1,8 @@
 {
   "name": "Mount Whitney Trail",
   "short": "WHITNEY",
-  "version": 2,
+  "version": 3,
+  "outAndBack": true,
   "dir": { "fwd": "toward the summit", "rev": "toward Whitney Portal" },
   "contour": { "interval": 200, "index": 1000 },
   "theme": { "accent": "#34d399" },
@@ -24,8 +25,8 @@
       "stay": { "dates": "Fri Jul 17 → Sat Jul 18, 2026", "nights": 1, "unit": "Whitney Zone overnight permit · treat & tank up on water here" } },
     { "name": "Trail Crest", "cat": "junction", "lat": 36.56652, "lon": -118.2925, "water": "no",
       "notes": "Top of the 99 switchbacks (~13,600′) and the JMT/PCT junction. Many stash overnight gear here for the out-and-back to the summit. No water beyond this point." },
-    { "name": "Mt. Whitney Summit", "cat": "junction", "lat": 36.57847, "lon": -118.29247, "water": "no", "end": true,
-      "notes": "14,505′ — highest point in the lower 48. Stone summit hut, sign the log. This is your turnaround; descend the same way. Be heading down before afternoon storms build." }
+    { "name": "Mt. Whitney Summit", "cat": "junction", "lat": 36.57847, "lon": -118.29247, "water": "no", "end": true, "endLabel": "TURNAROUND",
+      "notes": "14,505′ — highest point in the lower 48. Stone summit hut, sign the log. This is the HALFWAY point, not the finish: you still have ~11 mi and 6,000′ of descent back to Whitney Portal. Turn around early — be heading down before afternoon storms build, and pace water/energy for the way out." }
   ],
   "global": [
     { "name": "Altitude (AMS)", "cat": "hazard", "notes": "You'll sleep at ~12,000′ and summit at 14,505′. Headache/nausea/dizziness = AMS. Hydrate, go slow, and DESCEND if it worsens — altitude is the most common reason people turn around." },

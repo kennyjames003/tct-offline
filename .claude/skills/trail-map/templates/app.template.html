@@ -516,7 +516,7 @@ function renderWaypoints(){
     var dist=me?(' · '+mi2txt(meters2mi(hav(me.lat,me.lon,f.lat,f.lon)))+' away'):'';
     var wp=f.water==='no'?'<span class="pill no">NO WATER</span>':f.water==='seasonal'?'<span class="pill seasonal">SEASONAL H₂O</span>':'';
     if(f.stay)wp+='<span class="pill stay">🛏 YOUR STAY</span>';
-    if(f.end)wp+='<span class="pill end">TRIP END</span>';
+    if(f.end)wp+='<span class="pill end">'+(f.endLabel||'TRIP END')+'</span>';
     if(f.beyond)wp+='<span class="pill beyond">BEYOND YOUR TRIP</span>';
     var sub=f.stay?('Booked: '+f.stay.dates+' · '+f.stay.nights+(f.stay.nights>1?' nights':' night')):(f.notes.slice(0,60)+'…');
     rows+='<div class="wp'+(f.beyond?' beyond-row':'')+'" data-i="'+F.indexOf(f)+'"><div class="badge '+catBadge(f.cat)+'">'+catIcon(f.cat)+'</div>'+
@@ -663,7 +663,8 @@ document.addEventListener('visibilitychange',function(){if(wl===null)return;if(d
 // ====== misc UI ======
 $('sunbtn').addEventListener('click',function(){document.documentElement.classList.toggle('sun');this.classList.toggle('on');renderAll();});
 $('gotit').addEventListener('click',function(){$('introCard').style.display='none';try{localStorage.setItem(STORE+'seen','1');}catch(e){}});
-$('disc').textContent=TRAIL.disclaimer;$('footDisc').textContent=TRAIL.disclaimer+'  ·  Track from your GPX ('+T.totalMi+' mi one-way).';
+$('disc').textContent=TRAIL.disclaimer;
+$('footDisc').textContent=TRAIL.disclaimer+'  ·  Track from your GPX ('+T.totalMi+' mi one-way'+(TRIP.outAndBack?(' · '+(Math.round(T.totalMi*2*10)/10)+' mi round trip'):'')+').';
 if((function(){try{return localStorage.getItem(STORE+'seen');}catch(e){return 0;}})())$('introCard').style.display='none';
 $('troubleshoot').addEventListener('toggle',function(){if(this.open)renderTrouble();});
 

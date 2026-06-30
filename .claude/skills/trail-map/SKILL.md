@@ -121,8 +121,10 @@ opens. A headless Playwright pass is ideal (see the TCT session for the harness)
 ## Per-trail adaptation cheatsheet
 - **Inland trail** → `"land": null` (no coastline); contours are the terrain.
 - **Big vertical** (alpine) → larger `contour.interval` (200–400 ft) so lines aren't a blur.
-- **Out-and-back** → one-way GPX, mark the high point `"end": true`; optionally set
-  `tripEndMi` to the summit mile (or omit so nothing greys).
+- **Out-and-back** → one-way GPX (or `--out-and-back` to truncate a round-trip), set
+  `"outAndBack": true` (adds round-trip mileage in the footer), and mark the high point
+  `"end": true, "endLabel": "TURNAROUND"` so it's not badged "TRIP END". Set `dir.fwd`/`dir.rev`
+  to the up/down labels. Omit `tripEndMi` so the return leg isn't greyed.
 - **Loop / point-to-point** → set `tripEndMi` to the finish mile to grey anything past it.
 
 ## Gotchas

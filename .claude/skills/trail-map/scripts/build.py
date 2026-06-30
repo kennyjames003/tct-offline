@@ -111,6 +111,7 @@ def main():
         "short": trip.get("short", "TRL"),
         "tripEndMi": trip.get("tripEndMi"),
         "dir": trip.get("dir"),
+        "outAndBack": trip.get("outAndBack", False),
         "contour": contour,
         "tct": {
             "track": track,
