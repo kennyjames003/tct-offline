@@ -1,13 +1,13 @@
 {
-  "name": "Trans Catalina Trail — Offline",
-  "short_name": "TCT Trail",
-  "description": "Offline GPS hiking companion for the Trans Catalina Trail with live location, water/camp guidance, and troubleshooting.",
+  "name": "Mt. Whitney Trip — Offline Planner",
+  "short_name": "Whitney",
+  "description": "Offline Mt. Whitney trip planner: day-by-day schedule, what to do next, and what to verify before you go.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0b1410",
-  "theme_color": "#0b3d2e",
+  "background_color": "#0a0e22",
+  "theme_color": "#0a0e22",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }

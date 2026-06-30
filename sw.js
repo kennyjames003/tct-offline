@@ -1,11 +1,21 @@
-// Trans Catalina Trail offline PWA — cache-first service worker.
-// Everything (trail data, code) is inlined in index.html, so caching the shell = full offline.
-const CACHE = 'tct-v2';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
+// Mt. Whitney trip offline PWA — cache-first service worker.
+// App shell is inlined in index.html; USGS topo tiles (./tiles) are precached from tiles/manifest.json.
+const CACHE = 'whitney-v10';
+const ASSETS = ['./', './index.html', './manifest.webmanifest', './tiles/manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(() => {}));
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    await c.addAll(ASSETS).catch(() => {});
+    // Precache all topo tiles so the map works with zero service on-trail.
+    try {
+      const tiles = await fetch('./tiles/manifest.json', { cache: 'no-cache' }).then(r => r.json());
+      for (let i = 0; i < tiles.length; i += 30) {
+        await c.addAll(tiles.slice(i, i + 30)).catch(() => {});
+      }
+    } catch (e) {}
+  })());
 });
 
 self.addEventListener('activate', e => {
