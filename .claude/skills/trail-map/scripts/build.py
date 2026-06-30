@@ -110,6 +110,7 @@ def main():
         "name": trip.get("name", "Trail"),
         "short": trip.get("short", "TRL"),
         "tripEndMi": trip.get("tripEndMi"),
+        "dir": trip.get("dir"),
         "contour": contour,
         "tct": {
             "track": track,
@@ -123,23 +124,27 @@ def main():
     }
 
     # inject into engine template
+    accent = (trip.get("theme") or {}).get("accent", "#34d399")
     tpl = open(os.path.join(TEMPLATES, "app.template.html")).read()
     data = json.dumps(TRIP, ensure_ascii=False, separators=(",", ":"))
     if "__TRIP_DATA__" not in tpl:
         sys.exit("template missing __TRIP_DATA__ marker")
-    open(os.path.join(a.outdir, "index.html"), "w").write(tpl.replace("__TRIP_DATA__", data))
+    html = (tpl.replace("__TRIP_DATA__", data)
+               .replace("__NAME__", TRIP["name"]).replace("__SHORT__", TRIP["short"])
+               .replace("__ACCENT__", accent))
+    open(os.path.join(a.outdir, "index.html"), "w").write(html)
     print(f"[build] index.html written ({len(features)} waypoints, {len(track['lat'])} track pts)")
 
     # manifest
-    accent = (trip.get("theme") or {}).get("accent", "#34d399")
     man = open(os.path.join(TEMPLATES, "manifest.template.webmanifest")).read()
     man = (man.replace("__NAME__", TRIP["name"]).replace("__SHORT__", TRIP["short"])
               .replace("__ACCENT__", accent))
     open(os.path.join(a.outdir, "manifest.webmanifest"), "w").write(man)
 
-    # service worker (unique cache name)
+    # service worker (unique cache name; bump trip["version"] to force clients to update)
+    cache = TRIP["short"].lower().replace(" ", "-") + "-v" + str(trip.get("version", 1))
     sw = open(os.path.join(TEMPLATES, "sw.template.js")).read()
-    sw = sw.replace("__CACHE__", TRIP["short"].lower().replace(" ", "-") + "-v1")
+    sw = sw.replace("__CACHE__", cache)
     open(os.path.join(a.outdir, "sw.js"), "w").write(sw)
 
     open(os.path.join(a.outdir, ".nojekyll"), "w").write("")

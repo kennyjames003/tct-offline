@@ -3,24 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#0b3d2e">
+<meta name="theme-color" content="#0b1410">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="TCT">
+<meta name="apple-mobile-web-app-title" content="__SHORT__">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>Trans Catalina Trail — Offline</title>
+<title>__NAME__ — Offline</title>
 <style>
 :root{
   --bg:#0b1410; --panel:#13201a; --panel2:#1b2c24; --line:#2c4034;
   --txt:#eaf3ee; --dim:#9fb6aa; --accent:#34d399; --warn:#fbbf24; --bad:#f87171;
   --water:#38bdf8; --camp:#f59e0b; --town:#a78bfa; --air:#f472b6;
-  --sea:#0d2330; --land:#243524; --coast:#3d5a48; --contour:#37503f; --contourI:#5d7c64;
+  --sea:#0d2330; --land:#243524; --coast:#3d5a48; --mapbg:#10201a; --contour:#37503f; --contourI:#5d7c64;
 }
 html.sun{
   --bg:#fefefe; --panel:#ffffff; --panel2:#f1f5f2; --line:#c4d3ca;
-  --txt:#0a1a12; --dim:#3f5a4c; --accent:#047857; --sea:#cfe6f2; --land:#e9ecdc; --coast:#9bb1a3; --warn:#b45309; --bad:#b91c1c; --contour:#bcc7a8; --contourI:#94a47e;
+  --txt:#0a1a12; --dim:#3f5a4c; --accent:#047857; --sea:#cfe6f2; --land:#e9ecdc; --coast:#9bb1a3; --mapbg:#dfe6d8; --warn:#b45309; --bad:#b91c1c; --contour:#bcc7a8; --contourI:#94a47e;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
@@ -127,7 +127,7 @@ details[open]>summary::after{content:"▴"}
 <div class="wrap">
   <header>
     <div class="gpsdot" id="gpsdot"></div>
-    <h1>Trans Catalina Trail<div class="sub" id="gpsstat">Starting GPS…</div></h1>
+    <h1>__NAME__<div class="sub" id="gpsstat">Starting GPS…</div></h1>
     <button class="iconbtn" id="sunbtn" title="High-contrast">☀︎</button>
     <button class="iconbtn" id="lockbtn" title="Keep screen awake">☾</button>
   </header>
@@ -168,17 +168,14 @@ details[open]>summary::after{content:"▴"}
     <canvas id="map" height="300"></canvas>
     <div class="maptools">
       <button class="iconbtn on" id="followBtn">⊙ Follow</button>
-      <button class="iconbtn" id="fitBtn">⤢ Whole island</button>
+      <button class="iconbtn" id="fitBtn">⤢ Full route</button>
       <button class="iconbtn on" id="topoBtn">◭ Topo</button>
       <button class="iconbtn" id="zinBtn">＋</button>
       <button class="iconbtn" id="zoutBtn">－</button>
     </div>
     <div class="legend">
       <span><i class="dotk" style="background:var(--accent)"></i>You</span>
-      <span><i class="dotk" style="background:var(--camp)"></i>Camp</span>
-      <span><i class="dotk" style="background:var(--water)"></i>Water</span>
-      <span><i class="dotk" style="background:var(--town)"></i>Town</span>
-      <span><i class="dotk" style="background:var(--air)"></i>Airport</span>
+      <span id="legendCats" style="display:contents"></span>
       <span><i class="dotk" style="background:var(--contourI)"></i><span id="contourLegend">Contours</span></span>
       <span>Tap a marker for details</span>
     </div>
@@ -208,14 +205,14 @@ details[open]>summary::after{content:"▴"}
 
 <script>
 const TRIP=__TRIP_DATA__;
-const TCT=TRIP.tct;
+const TRAIL=TRIP.tct;
 
-TCT.land=(TRIP.tct&&TRIP.tct.land)||null;
+TRAIL.land=(TRIP.tct&&TRIP.tct.land)||null;
 </script>
 <script>
 (function(){
 "use strict";
-var T=TCT.track, F=TCT.features, G=TCT.global;
+var T=TRAIL.track, F=TRAIL.features, G=TRAIL.global;
 var lat=T.lat, lon=T.lon, ele=T.eleFt, cum=T.cumMi, N=lat.length;
 var midLat=(T.bounds.minLat+T.bounds.maxLat)/2, cosL=Math.cos(midLat*Math.PI/180);
 function $(id){return document.getElementById(id);}
@@ -259,10 +256,10 @@ function snap(pla,plo,anchorMi){
 // ---- state ----
 var me=null;            // {lat,lon,acc,mi,ele,off,ts}
 var hist=[];            // recent fixes for pace/direction
-var dirSign=1;          // +1 = traveling toward higher mile (Avalon->west), -1 reverse
+var dirSign=1;          // +1 = traveling toward higher mile (outbound), -1 = back toward the start
 var TRIP_END_MI=(TRIP.tripEndMi!=null?TRIP.tripEndMi:Infinity);  // mile where 'your trip' ends; beyond is greyed
-// Per-night camp reservations (Catalina Island Co. / Firefly). Edit here to change your plan.
-var ITINERARY=TRIP.itinerary||[];
+var STORE=((TRIP.short||'trail')+'').toLowerCase().replace(/[^a-z0-9]+/g,'')+'_';  // per-trail localStorage prefix
+var ITINERARY=TRIP.itinerary||[];   // nightly itinerary / camp plan (from TRIP)
 function todayISO(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 var paceMps=0;          // smoothed m/s
 var heading=null;       // compass deg if available
@@ -285,7 +282,7 @@ function fitTrail(){
   var minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9,w;
   for(var i=0;i<N;i++){w=world(lat[i],lon[i]);
     if(w[0]<minx)minx=w[0];if(w[0]>maxx)maxx=w[0];if(w[1]<miny)miny=w[1];if(w[1]>maxy)maxy=w[1];}
-  if(TCT.land&&TCT.land.rings){for(var ri=0;ri<TCT.land.rings.length;ri++){var rg=TCT.land.rings[ri];
+  if(TRAIL.land&&TRAIL.land.rings){for(var ri=0;ri<TRAIL.land.rings.length;ri++){var rg=TRAIL.land.rings[ri];
     for(var pi=0;pi<rg.length;pi++){w=world(rg[pi][0],rg[pi][1]);
       if(w[0]<minx)minx=w[0];if(w[0]>maxx)maxx=w[0];if(w[1]<miny)miny=w[1];if(w[1]>maxy)maxy=w[1];}}}
   var sz=map.clientWidth, h=300;
@@ -296,10 +293,10 @@ function fitTrail(){
 function w2s(wx,wy,d){return [(wx-view.cx)*view.scale+d.w/2,(wy-view.cy)*view.scale+d.h/2];}
 var showTopo=true;
 function drawContours(d){
-  if(!showTopo||!TCT.topo||!TCT.topo.levels)return;
+  if(!showTopo||!TRAIL.topo||!TRAIL.topo.levels)return;
   var mpp=111320/view.scale;          // meters per screen pixel
   var fine=mpp<40;                    // full 100 ft detail for normal zooms; thin to index (500 ft) only when zoomed way out
-  var L=TCT.topo.levels;
+  var L=TRAIL.topo.levels;
   for(var i=0;i<L.length;i++){var lev=L[i];
     if(!lev.i && !fine)continue;
     mctx.beginPath();var lines=lev.l;
@@ -314,16 +311,16 @@ function drawContours(d){
 }
 function drawMap(){
   var d=sizeCanvas(map,300);mctx.clearRect(0,0,d.w,d.h);
-  // sea background + island landmass (drawn under the trail)
-  mctx.fillStyle=getCss('--sea');mctx.fillRect(0,0,d.w,d.h);
-  if(TCT.land&&TCT.land.rings){mctx.lineWidth=1;mctx.strokeStyle=getCss('--coast');mctx.fillStyle=getCss('--land');
-    for(var ri=0;ri<TCT.land.rings.length;ri++){var rg=TCT.land.rings[ri];mctx.beginPath();
+  // map background (sea only if this trail has a landmass; otherwise a neutral terrain fill)
+  mctx.fillStyle=(TRAIL.land&&TRAIL.land.rings)?getCss('--sea'):getCss('--mapbg');mctx.fillRect(0,0,d.w,d.h);
+  if(TRAIL.land&&TRAIL.land.rings){mctx.lineWidth=1;mctx.strokeStyle=getCss('--coast');mctx.fillStyle=getCss('--land');
+    for(var ri=0;ri<TRAIL.land.rings.length;ri++){var rg=TRAIL.land.rings[ri];mctx.beginPath();
       for(var pi=0;pi<rg.length;pi++){var lw=world(rg[pi][0],rg[pi][1]);var ls=w2s(lw[0],lw[1],d);
         if(pi===0)mctx.moveTo(ls[0],ls[1]);else mctx.lineTo(ls[0],ls[1]);}
       mctx.closePath();mctx.fill();mctx.stroke();}}
   // topographic contour lines (under the trail)
   drawContours(d);
-  // trail line — full track dim (context beyond Two Harbors), your trip in accent on top
+  // trail line — full track dim (context past the trip end), your trip in accent on top
   mctx.lineWidth=3;mctx.lineJoin='round';
   mctx.strokeStyle=getCss('--dim');mctx.globalAlpha=.45;mctx.beginPath();
   for(var i=0;i<N;i++){var w=world(lat[i],lon[i]);var s=w2s(w[0],w[1],d);
@@ -375,13 +372,13 @@ function drawElev(){
   var totMi=cum[N-1];
   function X(mi){return pad+ (mi/totMi)*w;}
   function Y(e){return 6+ h-((e-emin)/((emax-emin)||1))*h;}
-  // fill — only your trip (Avalon → Two Harbors)
+  // fill — only the in-trip portion (up to TRIP_END_MI)
   var endMi=Math.min(TRIP_END_MI,totMi);
   ectx.beginPath();ectx.moveTo(X(0),6+h);
   for(var i=0;i<N;i++){if(cum[i]>endMi)break;ectx.lineTo(X(cum[i]),Y(ele[i]));}
   ectx.lineTo(X(endMi),6+h);ectx.closePath();
   ectx.fillStyle='rgba(52,211,153,.18)';ectx.fill();
-  // line: your trip in accent, beyond Two Harbors dim
+  // line: in-trip portion in accent, anything past the end dim
   ectx.beginPath();var mv=false;for(var i=0;i<N;i++){if(cum[i]>endMi)break;var x=X(cum[i]),y=Y(ele[i]);if(!mv){ectx.moveTo(x,y);mv=true;}else ectx.lineTo(x,y);}
   ectx.strokeStyle=getCss('--accent');ectx.lineWidth=2;ectx.stroke();
   ectx.beginPath();var mv2=false;for(var i=0;i<N;i++){if(cum[i]<endMi)continue;var x=X(cum[i]),y=Y(ele[i]);if(!mv2){ectx.moveTo(x,y);mv2=true;}else ectx.lineTo(x,y);}
@@ -394,7 +391,8 @@ function drawElev(){
   ectx.fillStyle=getCss('--dim');ectx.font='10px system-ui';ectx.textAlign='left';
   ectx.fillText(Math.round(emax)+"′",2,12);ectx.fillText(Math.round(emin)+"′",2,6+h);
   ectx.textAlign='center';
-  for(var m=0;m<=Math.floor(totMi);m+=10){ectx.fillText(m+"mi",X(m),d.h-4);}
+  var tstep=totMi<=6?1:(totMi<=15?2:(totMi<=40?5:10));
+  for(var m=0;m<=Math.floor(totMi);m+=tstep){ectx.fillText(m+"mi",X(m),d.h-4);}
   // me marker
   if(me){var x=X(me.mi);ectx.strokeStyle=getCss('--bad');ectx.lineWidth=2;
     ectx.beginPath();ectx.moveTo(x,6);ectx.lineTo(x,6+h);ectx.stroke();
@@ -423,6 +421,7 @@ function climbBetween(mi1,mi2){ // positive gain between two miles along recorde
   if(mi2<mi1){var t=mi1;mi1=mi2;mi2=t;}
   var g=0;for(var i=1;i<N;i++){if(cum[i]>=mi1&&cum[i]<=mi2){var de=ele[i]-ele[i-1];if(de>0)g+=de;}}
   return g;}
+function eleAtMi(mi){var bi=0,bd=1e9;for(var i=0;i<N;i++){var dd=Math.abs(cum[i]-mi);if(dd<bd){bd=dd;bi=i;}}return ele[bi];}
 function etaTxt(distMi){if(!paceMps||paceMps<0.2)return ''; var sec=(distMi*1609.34)/paceMps;
   if(sec<60)return '<1 min'; var min=Math.round(sec/60); if(min<90)return '~'+min+' min';
   return '~'+(Math.floor(min/60))+'h'+('0'+(min%60)).slice(-2);}
@@ -433,29 +432,32 @@ function renderNext(){
   var items=[];
   var camp=nextOf(function(f){return f.cat==='camp';});
   var water=nextOf(function(f){return f.water==='yes'&&(f.cat==='camp'||f.cat==='town'||f.cat==='airport'||f.cat==='water');});
-  var town=nextOf(function(f){return f.cat==='town'||f.cat==='airport';});
+  var town=nextOf(function(f){return f.cat==='town'||f.cat==='airport'||f.cat==='junction';});
   function row(label,n,kind){
     if(!n)return '';
     var f=n.f, dMi=Math.abs(n.aheadMi)>0.01?n.aheadMi:meters2mi(n.straightM);
     var ahead=n.aheadMi>0.03;
-    var climb=ahead?climbBetween(me.mi,f.mi):0;
+    var net=eleAtMi(f.mi)-me.ele;   // net elevation change to the target (+ up / − down)
     var sub=(ahead?'':'(nearest, off your direction) ')+f.name+
       (f.water==='no'?' · <span class="water-no">no water</span>':f.water==='seasonal'?' · <span class="water-seasonal">seasonal water</span>':f.water==='yes'?' · <span class="water-yes">water ✓</span>':'');
-    var clb=climb>40?(' · ▲'+Math.round(climb)+'′'):'';
+    var clb=net>40?(' · ▲'+Math.round(net)+'′'):net<-40?(' · ▼'+Math.round(-net)+'′'):'';
     return '<div class="next-item"><div class="badge '+catBadge(f.cat)+'">'+catIcon(f.cat)+'</div>'+
       '<div class="nm"><div class="t">'+label+'</div><div class="d">'+sub+clb+'</div></div>'+
       '<div class="rt"><div class="dist">'+mi2txt(Math.abs(dMi))+'</div><div class="eta">'+etaTxt(Math.abs(dMi))+'</div></div></div>';
   }
-  var bail=aheadFeatures.bailNearest=nearestBailout();
-  var html=row('Next camp',camp)+row('Next water',water)+row('Next town/airport',town);
-  if(bail)html+='<div class="next-item"><div class="badge b-bail">🆘</div><div class="nm"><div class="t">Nearest bailout</div><div class="d">'+bail.f.name+'</div></div><div class="rt"><div class="dist">'+mi2txt(meters2mi(bail.straightM))+'</div><div class="eta">straight line</div></div></div>';
+  var html=row('Next camp',camp)+row('Next water',water)+row('Next landmark',town);
+  var rt=routeRetreat();
+  if(rt)html+='<div class="next-item"><div class="badge b-bail">🆘</div><div class="nm"><div class="t">Bail-out</div><div class="d">Descend the trail to <b>'+rt.f.name+'</b></div></div><div class="rt"><div class="dist">'+mi2txt(rt.downMi)+'</div><div class="eta">down-trail</div></div></div>';
   nl.innerHTML=html||'<div style="color:var(--dim)">No landmarks ahead — you may be near the end.</div>';
-  $('dirNote').textContent = dirSign>0?'(heading W → Two Harbors)':'(heading E → Avalon)';
+  var dl=TRIP.dir||{};
+  $('dirNote').textContent = dirSign>0?('('+(dl.fwd||'outbound')+')'):('('+(dl.rev||'back toward the start')+')');
 }
-function nearestBailout(){if(!me)return null;var best=null;
-  for(var k=0;k<F.length;k++){var f=F[k];if(f.beyond)continue;if(f.cat!=='bailout'&&f.cat!=='town'&&f.cat!=='airport')continue;
-    var s=hav(me.lat,me.lon,f.lat,f.lon);if(!best||s<best.straightM)best={f:f,straightM:s};}
-  return best;}
+// Route-safe bail-out: the nearest camp/trailhead BELOW you ALONG THE TRAIL — i.e. where
+// you'd retreat to by descending the way you came. Never a straight-line / cross-country point.
+function routeRetreat(){if(!me)return null;var below=null;
+  for(var k=0;k<F.length;k++){var f=F[k];if(f.cat!=='camp'&&f.cat!=='town')continue;
+    if(f.mi < me.mi-0.1){if(!below||f.mi>below.f.mi)below={f:f,downMi:Math.max(0,me.mi-f.mi)};}}
+  return below;}
 
 // ====== where am I ======
 var OFF_THRESH=45; // meters
@@ -488,10 +490,11 @@ function segmentTip(){
   var bits=[];
   if(isOff())bits.push('You appear to be <b>'+Math.round(me.off)+'m off the trail line</b> — stop, check the map above, and navigate back to the green line before continuing.');
   if(nextWater){var dw=Math.abs(nextWater.aheadMi);
-    if(dw>4)bits.push('Next reliable water is <b>'+nextWater.f.name+'</b>, ~'+dw.toFixed(1)+' mi away — make sure you are carrying enough for a long, exposed stretch.');
-    else bits.push('Next reliable water: <b>'+nextWater.f.name+'</b> (~'+dw.toFixed(1)+' mi). Top off there.');}
-  if(nextCamp){var climb=climbBetween(me.mi,nextCamp.f.mi);
-    if(climb>250)bits.push('Heads-up: ~<b>'+Math.round(climb)+'′ of climbing</b> between you and '+nextCamp.f.name+'. Pace yourself.');}
+    if(dw>4)bits.push('Next water is <b>'+nextWater.f.name+'</b>, ~'+dw.toFixed(1)+' mi away — carry enough for a long, exposed stretch, and treat what you collect.');
+    else bits.push('Next water: <b>'+nextWater.f.name+'</b> (~'+dw.toFixed(1)+' mi) — treat it before drinking.');}
+  if(nextCamp){var net=eleAtMi(nextCamp.f.mi)-me.ele;
+    if(net>250)bits.push('Heads-up: ~<b>'+Math.round(net)+'′ of climbing</b> up to '+nextCamp.f.name+'. Pace yourself.');
+    else if(net<-250)bits.push('~<b>'+Math.round(-net)+'′ of descent</b> down to '+nextCamp.f.name+' — easy on the knees.');}
   // proximity callouts
   for(var i=0;i<a.length;i++){if(Math.abs(a[i].aheadMi)<0.4){bits.push('You are right at <b>'+a[i].f.name+'</b>: '+a[i].f.notes);break;}}
   if(!bits.length)bits.push('On track. Keep following the green line; tap landmarks on the map for details.');
@@ -499,8 +502,8 @@ function segmentTip(){
 }
 function renderTrouble(){
   var b=$('tsBody');var html='<div class="tip"><div class="th">🧭 Right now</div><div>'+segmentTip()+'</div></div>';
-  var bail=nearestBailout();
-  if(bail)html+='<div class="tip"><div class="th">🆘 Nearest bailout</div><div><b>'+bail.f.name+'</b> — '+mi2txt(meters2mi(bail.straightM))+' straight line. '+(bail.f.notes||'')+'</div></div>';
+  var rt=routeRetreat();
+  if(rt)html+='<div class="tip"><div class="th">🆘 If you need to bail</div><div>Turn around and <b>descend the trail</b> to <b>'+rt.f.name+'</b> (~'+mi2txt(rt.downMi)+' back down the way you came). Do NOT shortcut cross-country — retrace your route. If you are off the line, stop and navigate back onto the trail first.</div></div>';
   for(var i=0;i<G.length;i++){html+='<div class="tip"><div class="th">'+catIcon(G[i].cat)+' '+G[i].name+'</div><div>'+G[i].notes+'</div></div>';}
   b.innerHTML=html;
 }
@@ -550,7 +553,7 @@ function onFix(p){
   var dot=$('gpsdot'),st=$('gpsstat');
   if(c.accuracy<=20){dot.className='gpsdot ok';}else if(c.accuracy<=60){dot.className='gpsdot warn';}else{dot.className='gpsdot warn';}
   st.textContent='GPS ±'+Math.round(c.accuracy)+'m · mile '+me.mi.toFixed(1);
-  try{localStorage.setItem('tct_last',JSON.stringify({lat:me.lat,lon:me.lon,mi:me.mi}));}catch(e){}
+  try{localStorage.setItem(STORE+'last',JSON.stringify({lat:me.lat,lon:me.lon,mi:me.mi}));}catch(e){}
   if(follow){view.cx=world(me.lat,me.lon)[0];view.cy=world(me.lat,me.lon)[1];}
   renderAll();
 }
@@ -588,6 +591,16 @@ function renderPlan(){
     html+='</div>';
   });
   $('planBody').innerHTML=html;
+}
+function renderLegend(){
+  var el=$('legendCats'); if(!el)return;
+  var labels={town:'Trailhead/Town',camp:'Camp',water:'Water',junction:'Junction',airport:'Airport'};
+  var vars={town:'--town',camp:'--camp',water:'--water',junction:'--accent',airport:'--air'};
+  var seen={},html='';
+  for(var i=0;i<F.length;i++){var c=F[i].cat;
+    if(seen[c]||!labels[c])continue; seen[c]=1;
+    html+='<span><i class="dotk" style="background:var('+vars[c]+')"></i>'+labels[c]+'</span>';}
+  el.innerHTML=html;
 }
 function renderAll(){renderWhere();renderNext();renderItinerary();renderPlan();drawMap();drawElev();renderTrouble();renderWaypoints();}
 
@@ -649,29 +662,30 @@ document.addEventListener('visibilitychange',function(){if(wl===null)return;if(d
 
 // ====== misc UI ======
 $('sunbtn').addEventListener('click',function(){document.documentElement.classList.toggle('sun');this.classList.toggle('on');renderAll();});
-$('gotit').addEventListener('click',function(){$('introCard').style.display='none';try{localStorage.setItem('tct_seen','1');}catch(e){}});
-$('disc').textContent=TCT.disclaimer;$('footDisc').textContent=TCT.disclaimer+'  ·  Track from your GPX ('+T.totalMi+' mi).';
-if((function(){try{return localStorage.getItem('tct_seen');}catch(e){return 0;}})())$('introCard').style.display='none';
+$('gotit').addEventListener('click',function(){$('introCard').style.display='none';try{localStorage.setItem(STORE+'seen','1');}catch(e){}});
+$('disc').textContent=TRAIL.disclaimer;$('footDisc').textContent=TRAIL.disclaimer+'  ·  Track from your GPX ('+T.totalMi+' mi one-way).';
+if((function(){try{return localStorage.getItem(STORE+'seen');}catch(e){return 0;}})())$('introCard').style.display='none';
 $('troubleshoot').addEventListener('toggle',function(){if(this.open)renderTrouble();});
 
 // init view from last known or fit
-(function(){try{var l=JSON.parse(localStorage.getItem('tct_last'));if(l){me=null;}}catch(e){}})();
+(function(){try{var l=JSON.parse(localStorage.getItem(STORE+'last'));if(l){me=null;}}catch(e){}})();
 fitTrail();view.scale*=1; follow=true;$('followBtn').classList.add('on');
 renderAll();
-// on the big day itself, pop the Sunday plan open automatically
+// on a scheduled day, pop the trip plan open automatically
 renderPlan();
 if(TRIP.plan&&TRIP.plan.autoOpen&&TRIP.plan.autoOpen.indexOf(todayISO())>=0){var _p=$('tripPlan');if(_p)_p.open=true;}
+renderLegend();
 if(TRIP.contour){var _cl=$('contourLegend');if(_cl)_cl.textContent='Contours '+TRIP.contour.interval+'′ ('+TRIP.contour.index+'′ bold)';}
 document.title=(TRIP.name||'Trail')+' — Offline GPS';
 // load topographic contour data (cached by the service worker for offline use)
-fetch('./_topo.json').then(function(r){return r.json();}).then(function(j){TCT.topo=j;drawMap();}).catch(function(){});
+fetch('./_topo.json').then(function(r){return r.json();}).then(function(j){TRAIL.topo=j;drawMap();}).catch(function(){});
 window.addEventListener('resize',function(){drawMap();drawElev();});
 window.addEventListener('orientationchange',function(){setTimeout(function(){drawMap();drawElev();},300);});
 // gentle compass auto-try on first tap anywhere (iOS needs gesture)
 var once=function(){enableCompass();window.removeEventListener('touchend',once);};
 window.addEventListener('touchend',once,{passive:true});
 
-// Demo/preview mode: open the app with  #sim=33.4015,-118.4759  to preview a position without being on-trail.
+// Demo/preview mode: append e.g. #sim=36.56297,-118.27918 (Trail Camp) to preview a position without being on-trail.
 function simFromHash(){var m=/#sim=(-?\d+\.?\d*),(-?\d+\.?\d*)/.exec(location.hash);
   if(m){onFix({coords:{latitude:+m[1],longitude:+m[2],accuracy:12,heading:null,speed:0},timestamp:Date.now()});return true;}return false;}
 window.addEventListener('hashchange',simFromHash);

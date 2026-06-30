@@ -1,6 +1,8 @@
 {
   "name": "Mount Whitney Trail",
   "short": "WHITNEY",
+  "version": 2,
+  "dir": { "fwd": "toward the summit", "rev": "toward Whitney Portal" },
   "contour": { "interval": 200, "index": 1000 },
   "theme": { "accent": "#34d399" },
   "trackFile": "whitney.track.json",

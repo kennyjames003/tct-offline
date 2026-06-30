@@ -54,6 +54,8 @@ Copy `examples/tct.trip.json` as a model. Schema:
 ```jsonc
 {
   "name": "Mount Whitney Trail", "short": "WHITNEY",
+  "version": 2,                            // bump to force installed PWAs to re-cache (sets the SW cache name)
+  "dir": { "fwd": "toward the summit", "rev": "toward Whitney Portal" },  // direction labels for the "next up" header (omit for generic outbound/back)
   "tripEndMi": 10.7,                       // optional: mile the trip "ends" (beyond greyed). For an out-and-back, set to the summit mile so the return isn't greyed — or omit.
   "contour": { "interval": 200, "index": 1000 },  // ft. Bigger relief → bigger interval (Whitney ~200/1000; Catalina 100/500).
   "theme": { "accent": "#34d399" },        // app/icon accent color
