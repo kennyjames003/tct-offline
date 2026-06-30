@@ -37,10 +37,17 @@ elevation tiles, no key). Everything else is offline.
 ### 1. GPX → track
 ```bash
 python scripts/gpx_to_track.py route.gpx --name "Mount Whitney Trail" \
-    --out work/track.json --simplify-m 8 --fill-elev
+    --out work/track.json --simplify-m 8 --out-and-back
 ```
-`--simplify-m` drops points closer than N meters (keeps the file small; 8 is good).
-`--fill-elev` backfills elevation from tiles if the GPX lacks `<ele>`.
+- `--simplify-m` drops points closer than N meters (keeps the file small; 8 is good).
+- `--out-and-back` — **use this if the GPX is a round-trip recording** (starts and
+  ends at the trailhead). It keeps only the outbound leg up to the high point, so the
+  app's "what mile am I" snap isn't confused by the overlapping return. Mark the high
+  point `"end": true` in the waypoints. (Inspect first: if start≈end, it's a round-trip.)
+- `--fill-elev` backfills elevation from terrain tiles if the GPX lacks elevation
+  (handles both `<ele>` child elements and `ele="…"` attributes, e.g. GaiaGPS).
+- Elevation is lightly smoothed by default (GPS jitter otherwise inflates climb totals);
+  `--no-smooth` disables it.
 
 ### 2. Author `trip.json`
 Copy `examples/tct.trip.json` as a model. Schema:

@@ -28,21 +28,27 @@ def hav_m(la1, lo1, la2, lo2):
 
 def parse_gpx(path):
     txt = open(path, "r", encoding="utf-8", errors="replace").read()
-    # strip namespaces for simple findall
-    txt = re.sub(r'\sxmlns(:\w+)?="[^"]*"', "", txt, count=0)
+    # strip namespaces so plain tag names work (and so leftover prefixes don't orphan)
+    txt = re.sub(r'\sxmlns(:\w+)?="[^"]*"', "", txt)   # xmlns declarations
+    txt = re.sub(r'\s\w+:\w+="[^"]*"', "", txt)          # namespaced attrs (e.g. xsi:schemaLocation)
+    txt = re.sub(r'(</?)\w+:', r"\1", txt)               # namespaced element tags -> local name
     root = ET.fromstring(txt)
+    def elev_of(node):
+        # elevation may be a child <ele> (standard) or an attribute ele="" (Gaia etc.)
+        if node.get("ele") is not None:
+            try:
+                return float(node.get("ele"))
+            except ValueError:
+                return None
+        ele = node.find("ele")
+        return float(ele.text) if (ele is not None and ele.text) else None
+
     pts = []
     for tp in root.iter("trkpt"):
-        lat = float(tp.get("lat")); lon = float(tp.get("lon"))
-        ele = tp.find("ele")
-        e = float(ele.text) if (ele is not None and ele.text) else None
-        pts.append([lat, lon, e])
+        pts.append([float(tp.get("lat")), float(tp.get("lon")), elev_of(tp)])
     if not pts:  # fall back to route points
         for rp in root.iter("rtept"):
-            lat = float(rp.get("lat")); lon = float(rp.get("lon"))
-            ele = rp.find("ele")
-            e = float(ele.text) if (ele is not None and ele.text) else None
-            pts.append([lat, lon, e])
+            pts.append([float(rp.get("lat")), float(rp.get("lon")), elev_of(rp)])
     return pts
 
 
@@ -85,6 +91,36 @@ def fill_elev(pts, zoom=14):
     return pts
 
 
+def truncate_out_and_back(pts):
+    """For a round-trip recording (start≈end, high point in the middle), keep only
+    the outbound leg up to the highest point so the app's mile/snap logic is clean."""
+    if not pts or pts[0][2] is None:
+        return pts
+    si = max(range(len(pts)), key=lambda i: (pts[i][2] if pts[i][2] is not None else -1e9))
+    if si < len(pts) - 5:   # a real round-trip, not already one-way
+        return pts[:si + 1]
+    return pts
+
+
+def smooth_elev(pts, window=5):
+    """Light moving-average on elevation to cut GPS jitter (which inflates climb totals).
+    Preserves the first point and the high point."""
+    e = [p[2] for p in pts]
+    if any(v is None for v in e) or len(e) < window:
+        return pts
+    n, half = len(e), window // 2
+    hi = max(range(n), key=lambda i: e[i])
+    sm = e[:]
+    for i in range(n):
+        a, b = max(0, i - half), min(n, i + half + 1)
+        sm[i] = round(sum(e[a:b]) / (b - a), 1)
+    sm[0] = e[0]
+    sm[hi] = e[hi]
+    for i in range(n):
+        pts[i][2] = sm[i]
+    return pts
+
+
 def build_track(pts, name):
     lat = [round(p[0], 5) for p in pts]
     lon = [round(p[1], 5) for p in pts]
@@ -108,12 +144,21 @@ if __name__ == "__main__":
     ap.add_argument("--out", default="track.json")
     ap.add_argument("--simplify-m", type=float, default=8.0, help="drop points closer than N meters")
     ap.add_argument("--fill-elev", action="store_true", help="fill missing elevations from terrarium tiles")
+    ap.add_argument("--out-and-back", action="store_true",
+                    help="track is a round-trip recording; keep only the outbound leg (up to the high point)")
+    ap.add_argument("--no-smooth", action="store_true", help="disable elevation smoothing")
     a = ap.parse_args()
     pts = parse_gpx(a.gpx)
     print(f"[gpx] {len(pts)} points read")
     pts = simplify(pts, a.simplify_m)
     if a.fill_elev or any(p[2] is None for p in pts):
         pts = fill_elev(pts)
+    if a.out_and_back:
+        before = len(pts)
+        pts = truncate_out_and_back(pts)
+        print(f"[gpx] out-and-back: truncated {before} -> {len(pts)} points at the high point")
+    if not a.no_smooth:
+        pts = smooth_elev(pts)
     track = build_track(pts, a.name)
     json.dump(track, open(a.out, "w"), separators=(",", ":"))
     print(f"[gpx] {len(pts)} points, {track['totalMi']} mi -> {a.out}")
