@@ -1,7 +1,7 @@
 // Mt. Whitney trip offline PWA.
 // HTML shell: network-first (always fresh when online; cached copy when offline).
 // Topo tiles + icons: cache-first (fast, works with zero service on-trail).
-const CACHE = 'whitney-v15';
+const CACHE = 'whitney-v16';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './tiles/manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

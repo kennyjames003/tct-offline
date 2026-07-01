@@ -173,6 +173,14 @@ details[open]>summary::after{content:"▴"}
 .maplegend{display:flex;gap:13px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:8px}
 .maplegend span{display:flex;align-items:center;gap:5px}
 .maplegend i{width:9px;height:9px;display:inline-block;border-radius:2px}
+.schdist{margin-top:11px}
+.schdist .h{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--accent);font-weight:700;line-height:1.4;margin-bottom:8px}
+.schdist .h b{color:var(--magenta)}
+.schdist .lm{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px}
+.schdist .lm:first-of-type{border-top:none}
+.schdist .lm .d{color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.schdist .lm.here{color:var(--accent);font-weight:700}
+.schdist .lm.here .d{color:var(--accent)}
 .chk{display:flex;flex-direction:column}
 .chk .it{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:13.5px;line-height:1.4}
 .chk .it:first-child{border-top:none}
@@ -405,14 +413,18 @@ details[open]>summary::after{content:"▴"}
         <text x="165" y="57" font-size="8" fill="var(--dim)">14,505 ft &#183; summit Sat</text>
         <text x="287" y="20" font-size="9" fill="var(--dim)" text-anchor="end">N &#8593;</text>
       </g>
+      <circle id="schYouDot" cx="0" cy="0" r="4.5" fill="var(--accent)" stroke="#fff" stroke-width="1.6" style="display:none"/>
     </svg>
     <div class="maplegend">
       <span><i style="background:var(--accent)"></i>Trail / start</span>
       <span><i style="background:var(--camp)"></i>Camp</span>
       <span><i style="background:var(--water)"></i>Lake</span>
       <span><i style="background:var(--magenta)"></i>Summit</span>
+      <span><i style="background:var(--accent);border:1.5px solid #fff;border-radius:50%"></i>You</span>
     </div>
-    <div class="mapcap"><b>Schematic &mdash; not to scale.</b> Waypoints are in trail order along the Main Mt. Whitney Trail. Confirm exact distances, junctions, water &amp; current conditions with Inyo National Forest and a real topo map before you go.</div>
+    <div class="maptools"><button class="iconbtn" id="schLocBtn">&#9678; Where am I on this trail</button></div>
+    <div id="schDist" class="schdist" hidden></div>
+    <div class="mapcap"><b>Schematic &mdash; not to scale.</b> Waypoints are in trail order along the Main Mt. Whitney Trail. Distances are &#8776; trail miles measured from your GPX (may read a bit short vs. trail signs) &mdash; confirm with Inyo National Forest and a real topo map before you go.</div>
   </div>
 
   <div class="card" id="whereCard">
@@ -726,6 +738,77 @@ details[open]>summary::after{content:"▴"}
     }, function(){
       btn.textContent='◎ Locate me';
       set('bad','Couldn&rsquo;t get your location &mdash; enable GPS and allow location access.');
+    }, { enableHighAccuracy:true, timeout:12000, maximumAge:15000 });
+  });
+})();
+</script>
+
+<script>
+/* Schematic map — "where am I on this trail" + along-trail distance to each landmark. Offline GPS. */
+(function(){
+  var g = window.WH_DEFAULT_GPX || {}, route = g.pts, summit = g.summit;
+  var btn = document.getElementById('schLocBtn'), panel = document.getElementById('schDist'), dot = document.getElementById('schYouDot');
+  if(!route || !summit || !btn) return;
+  var R=6371000, rad=Math.PI/180, MI=1609.34;
+  function hav(a,b){ var dLa=(b[0]-a[0])*rad,dLo=(b[1]-a[1])*rad,
+    s=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a[0]*rad)*Math.cos(b[0]*rad)*Math.sin(dLo/2)*Math.sin(dLo/2);
+    return 2*R*Math.asin(Math.min(1,Math.sqrt(s))); }
+  // summit index (turnaround) + ascending-leg cumulative distance
+  var sIdx=0, sB=1e9; route.forEach(function(p,i){ var d=hav(p,summit); if(d<sB){sB=d;sIdx=i;} });
+  var cum=[0]; for(var i=1;i<=sIdx;i++) cum[i]=cum[i-1]+hav(route[i-1],route[i]);
+  // landmarks: real OSM coords validated against this GPX → cumulative miles + schematic marker position
+  var LM=[
+    {n:'Whitney Portal', cum:0.00, sx:150, sy:348},
+    {n:'Lone Pine Lake', cum:2.54, sx:176, sy:300},
+    {n:'Outpost Camp',   cum:3.34, sx:120, sy:262},
+    {n:'Mirror Lake',    cum:3.73, sx:180, sy:226},
+    {n:'Trail Camp',     cum:5.39, sx:150, sy:162},
+    {n:'Trail Crest',    cum:7.18, sx:150, sy:78},
+    {n:'Summit',         cum:8.95, sx:150, sy:50}
+  ];
+  function userPos(lat,lon){
+    var mLat=111320, mLon=111320*Math.cos(lat*rad), best=1e9, bestCum=0;
+    for(var i=0;i<sIdx;i++){
+      var ax=(route[i][1]-lon)*mLon, ay=(route[i][0]-lat)*mLat;
+      var bx=(route[i+1][1]-lon)*mLon, by=(route[i+1][0]-lat)*mLat;
+      var dx=bx-ax, dy=by-ay, L2=dx*dx+dy*dy;
+      var t=L2>0?((0-ax)*dx+(0-ay)*dy)/L2:0; t=t<0?0:t>1?1:t;
+      var cx=ax+t*dx, cy=ay+t*dy, d=Math.sqrt(cx*cx+cy*cy);
+      if(d<best){ best=d; bestCum=(cum[i]+t*(cum[i+1]-cum[i]))/MI; }
+    }
+    return { cumMi:bestCum, snapM:best };
+  }
+  function fmt(mi){ return mi<0.1 ? Math.round(mi*5280)+' ft' : mi.toFixed(1)+' mi'; }
+  function place(userCum){
+    var a=LM[0], b=LM[LM.length-1];
+    for(var i=0;i<LM.length-1;i++){ if(userCum>=LM[i].cum && userCum<=LM[i+1].cum){ a=LM[i]; b=LM[i+1]; break; } }
+    if(userCum>LM[LM.length-1].cum){ a=LM[LM.length-2]; b=LM[LM.length-1]; }
+    var span=b.cum-a.cum, t=span>0?(userCum-a.cum)/span:0; t=t<0?0:t>1?1:t;
+    dot.setAttribute('cx',(a.sx+t*(b.sx-a.sx)).toFixed(1));
+    dot.setAttribute('cy',(a.sy+t*(b.sy-a.sy)).toFixed(1));
+    dot.style.display='';
+  }
+  btn.addEventListener('click', function(){
+    if(!('geolocation' in navigator)){ panel.hidden=false; panel.innerHTML='<div class="h">Location isn’t available on this device.</div>'; return; }
+    btn.textContent='◎ Locating…';
+    navigator.geolocation.getCurrentPosition(function(p){
+      btn.textContent='◎ Update position';
+      var up=userPos(p.coords.latitude, p.coords.longitude);
+      place(up.cumMi);
+      var toSummit=LM[LM.length-1].cum-up.cumMi;
+      var head='You’re ≈ '+up.cumMi.toFixed(1)+' trail mi in · <b>Summit '+fmt(Math.abs(toSummit))+' '+(toSummit>=0?'ahead':'behind')+'</b>';
+      var rows='';
+      LM.forEach(function(m){
+        var delta=m.cum-up.cumMi, here=Math.abs(delta)<0.08;
+        var txt = here ? 'you’re here' : (fmt(Math.abs(delta))+' '+(delta>0?'ahead':'back'));
+        rows+='<div class="lm'+(here?' here':'')+'"><span class="n">'+m.n+'</span><span class="d">'+txt+'</span></div>';
+      });
+      var note = up.snapM>400 ? '<div class="mapcap" style="margin-top:9px">You’re ≈'+(up.snapM/1000).toFixed(1)+' km from the trail line — these assume you’re on the trail.</div>' : '';
+      panel.innerHTML='<div class="h">'+head+'</div>'+rows+note;
+      panel.hidden=false;
+    }, function(){
+      btn.textContent='◎ Where am I on this trail';
+      panel.hidden=false; panel.innerHTML='<div class="h">Couldn’t get your location — enable GPS / allow access.</div>';
     }, { enableHighAccuracy:true, timeout:12000, maximumAge:15000 });
   });
 })();
