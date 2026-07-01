@@ -1,6 +1,6 @@
 // Mt. Whitney trip offline PWA — cache-first service worker.
 // App shell is inlined in index.html; USGS topo tiles (./tiles) are precached from tiles/manifest.json.
-const CACHE = 'whitney-v10';
+const CACHE = 'whitney-v11';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './tiles/manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

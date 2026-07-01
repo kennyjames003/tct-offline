@@ -124,12 +124,6 @@ details[open]>summary::after{content:"▴"}
 .itin.tonight{background:rgba(52,211,153,.09);border-radius:10px;border-top:none;padding:9px;margin:3px 0}
 .itin.tonight+.itin{border-top:none}
 .itin.tonight .cn{color:var(--accent)}
-.tag-now{display:inline-block;font-size:9.5px;font-weight:800;background:rgba(52,211,153,.22);color:var(--accent);padding:1px 6px;border-radius:20px;margin-left:6px;vertical-align:middle}
-.sched{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:13px;align-items:baseline}
-.sched:first-child{border-top:none}
-.sched .tm{font-weight:800;color:var(--accent);width:78px;flex-shrink:0;font-variant-numeric:tabular-nums}
-.sched .pl{flex:1;min-width:0;line-height:1.35}
-.sched .mi2{color:var(--dim);font-size:11px;flex-shrink:0;white-space:nowrap}
 .dl{display:flex;flex-wrap:wrap;gap:5px 14px;font-size:12.5px;margin:3px 0}
 .dl span b{color:var(--accent)}
 .pop{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);
@@ -147,8 +141,8 @@ details[open]>summary::after{content:"▴"}
 .sched .chip{background:var(--accent);color:#06222b;font-weight:800;font-size:11px;
   padding:3px 8px;border-radius:3px;letter-spacing:1px;text-transform:uppercase;
   font-family:ui-monospace,Menlo,monospace;box-shadow:2px 2px 0 var(--shadow)}
-.sched .day:nth-child(3) .chip{background:var(--magenta);color:#fff}
-.sched .day:nth-child(4) .chip{background:var(--camp);color:#3a1c06}
+.sched .day[data-date="2026-07-17"] .chip{background:var(--magenta);color:#fff}
+.sched .day[data-date="2026-07-18"] .chip{background:var(--camp);color:#3a1c06}
 .sched .date{font-size:12px;color:var(--dim);font-weight:600}
 .sched .title{font-weight:700;font-size:15px;flex:1;min-width:140px;line-height:1.2}
 .sched .stats{display:flex;gap:16px;margin:7px 0 5px;flex-wrap:wrap}
