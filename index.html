@@ -68,6 +68,8 @@ header .sub{font-size:11px;color:var(--dim);font-weight:500}
 .banner{border-radius:11px;padding:11px 12px;font-weight:700;font-size:15px;display:flex;align-items:center;gap:10px;margin-top:4px}
 .banner.ok{background:rgba(94,234,212,.13);color:var(--accent);border:1px solid rgba(94,234,212,.35)}
 .banner.bad{background:rgba(248,113,113,.14);color:var(--bad);border:1px solid rgba(248,113,113,.4)}
+.banner.warn{background:rgba(251,191,36,.14);color:var(--warn);border:1px solid rgba(251,191,36,.4)}
+.banner.info{background:var(--panel2);color:var(--dim);border:1px solid var(--line);font-size:13px;font-weight:600}
 .arrow{display:inline-block;font-size:26px;transition:transform .25s}
 .next-item{display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px solid var(--line)}
 .next-item:first-child{border-top:none}
@@ -413,6 +415,14 @@ details[open]>summary::after{content:"▴"}
     <div class="mapcap"><b>Schematic &mdash; not to scale.</b> Waypoints are in trail order along the Main Mt. Whitney Trail. Confirm exact distances, junctions, water &amp; current conditions with Inyo National Forest and a real topo map before you go.</div>
   </div>
 
+  <div class="card" id="whereCard">
+    <h2>Where am I — on the trail?</h2>
+    <div id="whereBanner" class="banner info">Tap &ldquo;Locate me&rdquo; to check your position against the route.</div>
+    <div class="row" id="whereStats" style="margin-top:11px" hidden></div>
+    <div class="maptools"><button class="iconbtn" id="whereBtn">&#9678; Locate me</button></div>
+    <div class="mapcap">Uses your phone&rsquo;s GPS against the bundled route &mdash; works offline, no signal needed. Distance is straight-line to the nearest point on the trail line; always cross-check with a real map.</div>
+  </div>
+
   <div class="card" id="topoCard">
     <h2>Topographic map — offline</h2>
     <div id="offlineStatus" class="offstat" hidden>Checking offline maps&hellip;</div>
@@ -656,6 +666,68 @@ details[open]>summary::after{content:"▴"}
     render();
   });
   updateCount();
+})();
+</script>
+
+<script>
+/* "Where am I — on the trail?" — device GPS vs. the bundled route line. Fully offline. */
+(function(){
+  var g = window.WH_DEFAULT_GPX || {};
+  var route = g.pts, summit = g.summit;
+  var banner = document.getElementById('whereBanner');
+  var stats = document.getElementById('whereStats');
+  var btn = document.getElementById('whereBtn');
+  if(!route || !banner || !btn) return;
+
+  function hav(a,b){ var R=6371000,t=Math.PI/180,dLa=(b[0]-a[0])*t,dLo=(b[1]-a[1])*t;
+    var s=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a[0]*t)*Math.cos(b[0]*t)*Math.sin(dLo/2)*Math.sin(dLo/2);
+    return 2*R*Math.asin(Math.min(1,Math.sqrt(s))); }
+  // nearest point on the polyline (local planar meters around the user)
+  function nearest(lat,lon){
+    var mLat=111320, mLon=111320*Math.cos(lat*Math.PI/180);
+    var best=Infinity, be=0, bn=0;
+    for(var i=0;i<route.length-1;i++){
+      var ax=(route[i][1]-lon)*mLon,   ay=(route[i][0]-lat)*mLat;
+      var bx=(route[i+1][1]-lon)*mLon, by=(route[i+1][0]-lat)*mLat;
+      var dx=bx-ax, dy=by-ay, L2=dx*dx+dy*dy;
+      var tt = L2>0 ? ((0-ax)*dx+(0-ay)*dy)/L2 : 0; tt=Math.max(0,Math.min(1,tt));
+      var cx=ax+tt*dx, cy=ay+tt*dy, d=Math.sqrt(cx*cx+cy*cy);
+      if(d<best){ best=d; be=cx; bn=cy; }
+    }
+    return { dist:best, east:be, north:bn };
+  }
+  function compass(e,n){
+    var deg=(Math.atan2(e,n)*180/Math.PI+360)%360;
+    return ['N','NE','E','SE','S','SW','W','NW'][Math.round(deg/45)%8];
+  }
+  function fmtM(m){ return m>=1000 ? (m/1000).toFixed(m<10000?1:0)+' km' : Math.round(m)+' m'; }
+  function set(cls,html){ banner.className='banner '+cls; banner.innerHTML=html; }
+
+  btn.addEventListener('click', function(){
+    if(!('geolocation' in navigator)){ set('bad','Location isn&rsquo;t available on this device.'); return; }
+    btn.textContent='◎ Locating…'; set('info','Locating&hellip;');
+    navigator.geolocation.getCurrentPosition(function(p){
+      btn.textContent='◎ Update location';
+      var lat=p.coords.latitude, lon=p.coords.longitude, acc=p.coords.accuracy||0;
+      var n=nearest(lat,lon);
+      var onTrail = n.dist <= Math.max(25, acc);
+      if(onTrail){
+        set('ok','✓ <b>ON TRAIL</b> &mdash; you&rsquo;re on the line'+(acc?' (±'+Math.round(acc)+' m GPS)':''));
+      } else {
+        set('warn','⚠ <b>OFF TRAIL</b> &mdash; '+fmtM(n.dist)+' to the trail · head '+compass(n.east,n.north));
+      }
+      var toSummit = summit ? hav([lat,lon],summit) : null;
+      var html =
+        '<div class="kv"><div class="l">To trail</div><div class="v">'+fmtM(n.dist)+'</div></div>'+
+        '<div class="kv"><div class="l">Trail is</div><div class="v">'+(onTrail?'here':compass(n.east,n.north))+'</div></div>'+
+        '<div class="kv"><div class="l">GPS acc.</div><div class="v">'+(acc?'±'+Math.round(acc)+' m':'—')+'</div></div>'+
+        (toSummit!=null ? '<div class="kv"><div class="l">To summit</div><div class="v">'+fmtM(toSummit)+'</div></div>' : '');
+      stats.innerHTML=html; stats.hidden=false;
+    }, function(){
+      btn.textContent='◎ Locate me';
+      set('bad','Couldn&rsquo;t get your location &mdash; enable GPS and allow location access.');
+    }, { enableHighAccuracy:true, timeout:12000, maximumAge:15000 });
+  });
 })();
 </script>
 </body>
