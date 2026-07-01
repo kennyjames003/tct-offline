@@ -720,19 +720,26 @@ details[open]>summary::after{content:"▴"}
     btn.textContent='◎ Locating…'; set('info','Locating&hellip;');
     navigator.geolocation.getCurrentPosition(function(p){
       btn.textContent='◎ Update location';
-      var lat=p.coords.latitude, lon=p.coords.longitude, acc=p.coords.accuracy||0;
-      var n=nearest(lat,lon);
-      var onTrail = n.dist <= Math.max(25, acc);
-      if(onTrail){
-        set('ok','✓ <b>ON TRAIL</b> &mdash; you&rsquo;re on the line'+(acc?' (±'+Math.round(acc)+' m GPS)':''));
+      var lat=p.coords.latitude, lon=p.coords.longitude, acc=Math.round(p.coords.accuracy||0);
+      var n=nearest(lat,lon), d=n.dist;
+      var onTrail = acc<=120 && d <= Math.max(25, acc);
+      var dirLabel = compass(n.east,n.north);
+      if(acc>120){
+        // a rough (wifi/cell) fix — don't make a confident on/off-trail claim
+        set('warn','⚠ <b>Rough GPS fix</b> (±'+acc+' m) &mdash; step into open sky &amp; retry. '+(d>2000?('You look &asymp; '+fmtM(d)+' from the trail.'):'Can&rsquo;t confirm on/off trail yet.'));
+      } else if(onTrail){
+        set('ok','✓ <b>ON TRAIL</b> &mdash; you&rsquo;re on the line (±'+acc+' m GPS)');
+      } else if(d < 2000){
+        set('warn','⚠ <b>OFF TRAIL</b> &mdash; '+fmtM(d)+' to the trail · head '+dirLabel);
       } else {
-        set('warn','⚠ <b>OFF TRAIL</b> &mdash; '+fmtM(n.dist)+' to the trail · head '+compass(n.east,n.north));
+        // clearly not near the mountain (e.g. planning from home)
+        set('info','📍 <b>'+fmtM(d)+' from the trail</b> &mdash; you&rsquo;re not on the mountain yet.');
       }
       var toSummit = summit ? hav([lat,lon],summit) : null;
       var html =
-        '<div class="kv"><div class="l">To trail</div><div class="v">'+fmtM(n.dist)+'</div></div>'+
-        '<div class="kv"><div class="l">Trail is</div><div class="v">'+(onTrail?'here':compass(n.east,n.north))+'</div></div>'+
-        '<div class="kv"><div class="l">GPS acc.</div><div class="v">'+(acc?'±'+Math.round(acc)+' m':'—')+'</div></div>'+
+        '<div class="kv"><div class="l">To trail</div><div class="v">'+fmtM(d)+'</div></div>'+
+        '<div class="kv"><div class="l">Trail is</div><div class="v">'+(onTrail?'here':dirLabel)+'</div></div>'+
+        '<div class="kv"><div class="l">GPS acc.</div><div class="v">'+(acc?'±'+acc+' m':'—')+'</div></div>'+
         (toSummit!=null ? '<div class="kv"><div class="l">To summit</div><div class="v">'+fmtM(toSummit)+'</div></div>' : '');
       stats.innerHTML=html; stats.hidden=false;
     }, function(){
