@@ -1,6 +1,7 @@
-// Mt. Whitney trip offline PWA — cache-first service worker.
-// App shell is inlined in index.html; USGS topo tiles (./tiles) are precached from tiles/manifest.json.
-const CACHE = 'whitney-v12';
+// Mt. Whitney trip offline PWA.
+// HTML shell: network-first (always fresh when online; cached copy when offline).
+// Topo tiles + icons: cache-first (fast, works with zero service on-trail).
+const CACHE = 'whitney-v13';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './tiles/manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -25,17 +26,31 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Cache-first: works fully offline; falls back to network only for cache misses.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request, { ignoreSearch: true }).then(hit => {
-      if (hit) return hit;
-      return fetch(e.request).then(resp => {
+  const req = e.request;
+  const accept = req.headers.get('accept') || '';
+  const isShell = req.mode === 'navigate' || accept.includes('text/html');
+
+  if (isShell) {
+    // Network-first for the page itself: online users always get the latest build;
+    // offline users fall back to the last cached copy. No more stuck updates.
+    e.respondWith(
+      fetch(req).then(resp => {
         const copy = resp.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
+        caches.open(CACHE).then(c => c.put('./index.html', copy)).catch(() => {});
         return resp;
-      }).catch(() => caches.match('./index.html'));
-    })
+      }).catch(() => caches.match('./index.html').then(h => h || caches.match('./')))
+    );
+    return;
+  }
+
+  // Cache-first for tiles/icons/manifest: fast and fully offline.
+  e.respondWith(
+    caches.match(req, { ignoreSearch: true }).then(hit => hit || fetch(req).then(resp => {
+      const copy = resp.clone();
+      caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+      return resp;
+    }).catch(() => caches.match('./index.html')))
   );
 });
